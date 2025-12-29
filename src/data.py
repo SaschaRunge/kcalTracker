@@ -14,19 +14,17 @@ class DataType(Enum):
 
 class Data():
     def __init__(self, filename = PATH_TO_FILE):
-        self.source_data = {}
+        self.source_data = {
+            "date": [],
+            "kcal": [],
+            "weight": [],
+        }
         self.generated_data = {}
 
         self._import_data_as_dict(filename)
-        self._normalize_all_data()
+        self._normalize_all_inputs()
     
     def _import_data_as_dict(self, filename):
-        date = []
-        kcal = []
-        weight = []
-
-        self.source_data = {}
-        
         #TODO: abspath to csv
         
         try:
@@ -35,15 +33,14 @@ class Data():
                 for row in csv_reader:
                     if("date" not in row.keys() or "weight" not in row.keys() or "kcal" not in row.keys()):
                         raise Exception(f"Missing or incomplete header in '{filename}'. Columns 'date', 'weight' and 'kcal' must exist.")
-                    date.append(row["date"])
-                    kcal.append(row["kcal"])
-                    weight.append(row["weight"])
+                    self.source_data["date"].append(row["date"])
+                    self.source_data["kcal"].append(row["kcal"])
+                    self.source_data["weight"].append(row["weight"])
         except Exception as e:
             sys.exit(f"Error: Unable to read data from '{filename}':\n{e}")
-                
-        self.source_data["date"] = date
-        self.source_data["kcal"] = kcal
-        self.source_data["weight"] = weight   
+
+        if(self._has_duplicates(self.source_data["date"])):
+            sys.exit(f"Error: Duplicate entries in column 'date' in '{filename}' are invalid. Exiting... .")
 
     def _clean_string(self, string):
         if not string:
@@ -65,6 +62,16 @@ class Data():
         except ValueError as e:
             sys.exit(f"ValueError: Could not convert string to datatype {datatype} (likely due to invalid formatting of your .csv): {e}")
         return value
+    
+    def _has_duplicates(self, data):
+        unique_values = set()
+
+        for value in data:
+            if value in unique_values:
+                return True
+            unique_values.add(value)
+        
+        return False
 
     def _normalize_input(self, input, datatype):
         normalized_input = []
@@ -73,9 +80,9 @@ class Data():
             normalized_input.append(self._try_convert_string_to_value(value, datatype))
         return normalized_input
 
-    def _normalize_all_data(self):
+    def _normalize_all_inputs(self):
         self.generated_data["date"] = self._normalize_input(self.source_data["date"], DataType.DATE)
-        self.generated_data["kcal"] = self._normalize_input(self.source_data["kcal"], DataType.INTEGER)
+        self.generated_data["kcal"] = self._normalize_input(self.source_data["kcal"], DataType.FLOAT)
         self.generated_data["weight"] = self._normalize_input(self.source_data["weight"], DataType.FLOAT)
 
     def add(self, data, key):
@@ -84,16 +91,36 @@ class Data():
                 raise NotImplementedError("TODO: Make sure to enforce consistent length for all lists stored in generated data (class Data).")
         self.generated_data[key] = data
 
-    def get_by_date(self, key, date_from, date_to=None):
+    ### Returns the specified data in column key between two dates. If the end date is earlier than the start date, end date is set to start date. ###
+    def get_by_date(self, key, date_start, date_end=None):
+        dates = self.generated_data["date"]
+
         if key not in self.generated_data.keys():
             return None
-        if date_to is None:
-            date_to = date_from
-        if not isinstance(date_from, datetime.date):
-            self._try_convert_string_to_date(date_from)
-        if not isinstance(date_to, datetime.date):
-            self._try_convert_string_to_date(date_to)
+        if not dates:
+            return []
+        if date_end is None or date_end < date_start:
+            date_end = date_start
+        if not isinstance(date_start, datetime.date):
+            date_start = self._try_convert_string_to_date(date_start)
+        if not isinstance(date_end, datetime.date):
+            date_end = self._try_convert_string_to_date(date_end)
 
+        i = 0
+        while (i < len(dates) and date_start > dates[i]):
+            i += 1
+        if i < len(dates) and date_start >= dates[i]:
+            lower_index = i
+        else:
+            return []
+        while (i < len(dates) and date_end > dates[i]):
+            i += 1
+        if i < len(dates):
+            upper_index = i
+        else:
+            upper_index = len(dates) - 1
+
+        return  self.generated_data[key][lower_index:upper_index + 1]
 
     def _try_convert_string_to_date(self, string):
         try:

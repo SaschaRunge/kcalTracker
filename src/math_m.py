@@ -1,6 +1,6 @@
 class Math_m():
-    ### Calculates the moving average at datapoint i for n values. The moving average at datapoint i is calculated with the datapoints between i - n + offset and i + offset.###
-    ### If there's not enough datapoints within the given range it will shorten the length of n to fit the data.                                                         ###
+    ### Calculates the moving average at datapoint i for n values. The moving average at datapoint i is calculated with the datapoints between i - n + offset and i + offset. ###
+    ### If there's not enough datapoints within the given range it will shorten the length of n to fit the data.                                                              ###
     def calculate_moving_average(data, n, offset=0):
         result = []
         for i in range(len(data)):
