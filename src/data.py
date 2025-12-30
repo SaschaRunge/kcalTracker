@@ -4,6 +4,7 @@ import csv
 import datetime
 
 from enum import Enum
+from parser import Parser
 
 PATH_TO_FILE = "./data/input/input.csv"
 
@@ -11,6 +12,9 @@ class DataType(Enum):
     INTEGER = 0
     FLOAT = 1
     DATE = 2
+
+class InvalidTypeException(Exception):
+    pass
 
 class Data():
     def __init__(self, filename = PATH_TO_FILE):
@@ -47,27 +51,6 @@ class Data():
             self._has_empty_values(self.source_data["kcal"]) or
             self._has_empty_values(self.source_data["weight"])):
             sys.exit(f"Error: Dataset '{filename}' has missing values. Exiting... .")
-
-    def _clean_string(self, string):
-        if not string:
-            return "0"
-        string = string.translate(str.maketrans(',', '.', ' "!@#$'))
-        return string
-    
-    def _try_convert_string_to_value(self, string, datatype):
-        try:
-            match(datatype):
-                case DataType.INTEGER:
-                    value = int(string)
-                case DataType.FLOAT:
-                    value = float(string)
-                case DataType.DATE:
-                    value = self._try_convert_string_to_date(string)
-                case _:
-                    raise Exception(f"Invalid datatype {datatype} in {os.path.abspath(__file__)} in {self._try_convert_string_to_value.__name__}.")
-        except ValueError as e:
-            sys.exit(f"ValueError: Could not convert string to datatype {datatype} (likely due to invalid formatting of your .csv): {e}")
-        return value
     
     def _has_duplicates(self, data):
         unique_values = set()
@@ -84,11 +67,23 @@ class Data():
                 return True
         return False
 
-    def _normalize_input(self, input, datatype):
+    def _normalize_input(self, strings, datatype):
         normalized_input = []
-        for value in input:
-            value = self._clean_string(value)
-            normalized_input.append(self._try_convert_string_to_value(value, datatype))
+        try:
+            for string in strings:
+                match(datatype):
+                    case DataType.INTEGER:
+                        value = Parser.parse_int(string)
+                    case DataType.FLOAT:
+                        value = Parser.parse_float(string)
+                    case DataType.DATE:
+                        value = Parser.parse_date(string)
+                    case _:
+                        raise InvalidTypeException(f"Invalid datatype {datatype} in {os.path.abspath(__file__)} in {self._normalize_input.__name__}.")
+                normalized_input.append(value)
+        except ValueError as e:
+            sys.exit(f"ValueError: Could not convert string to datatype {datatype} (likely due to invalid formatting of your .csv): {e}") 
+
         return normalized_input
 
     def _normalize_all_inputs(self):
@@ -110,12 +105,16 @@ class Data():
             return None
         if not dates:
             return []
-        if date_end is None or date_end < date_start:
-            date_end = date_start
+        
         if not isinstance(date_start, datetime.date):
-            date_start = self._try_convert_string_to_date(date_start)
-        if not isinstance(date_end, datetime.date):
-            date_end = self._try_convert_string_to_date(date_end)
+            date_start = Parser.parse_date(date_start)
+        if date_end is None:
+            date_end = date_start
+        elif not isinstance(date_end, datetime.date):
+            date_end = Parser.parse_date(date_end)
+
+        if date_end < date_start:
+            date_end = date_start
 
         i = 0
         while (i < len(dates) and date_start > dates[i]):
@@ -132,12 +131,6 @@ class Data():
             upper_index = len(dates) - 1
 
         return  self.generated_data[key][lower_index:upper_index + 1]
-
-    def _try_convert_string_to_date(self, string):
-        try:
-            return datetime.date.fromisoformat(string)
-        except ValueError as e:
-            raise NotImplementedError(f"TODO: Handle failed string to date conversion in _try_convert_string_to_date: {e}")
 
 if __name__ == '__main__':
     Data()
