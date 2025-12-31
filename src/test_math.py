@@ -2,7 +2,7 @@ import unittest
 
 from math_m import Math_m
 
-class TestMath(unittest.TestCase):
+class TestCalculateMovingAverage(unittest.TestCase):
     def test_calculate_moving_average_empty(self):
         data = []
         output_is = Math_m.calculate_moving_average(data, 5, 2)
@@ -49,3 +49,73 @@ class TestMath(unittest.TestCase):
                             sum(data[0:4])/4, sum(data[0:5])/5, sum(data[1:6])/5,
                             sum(data[2:7])/5, sum(data[3:8])/5, sum(data[4:9])/5]
         self.assertEqual(output_is, output_should_be) '''
+    
+class TestHelper(unittest.TestCase):
+    def test_mulitply_lists(self):
+        array1 = [1, 2, -3, 0]
+        array2 = [4, 7, 2, 5]
+
+        output_is = Math_m._mulitply_lists(array1, array2)
+        output_should_be = [4, 14, -6, 0]
+        self.assertEqual(output_is, output_should_be)
+
+    def test_mulitply_lists_empty(self):
+        array1 = []
+        array2 = []
+
+        output_is = Math_m._mulitply_lists(array1, array2)
+        output_should_be = []
+        self.assertEqual(output_is, output_should_be)
+
+    def test_mulitply_lists_uneven(self):
+        array1 = [1, 2, -3]
+        array2 = [4, 7, 2, 5]
+
+        self.assertRaises(ValueError, Math_m._mulitply_lists, array1, array2)
+
+class TestLinearLeastSquares(unittest.TestCase):
+    def test_linear_least_squares_very_short(self):
+        x_values = [1, 2]
+        y_values = [2, 3]
+
+        output_is = Math_m.linear_least_squares(x_values, y_values)
+        output_should_be = (1, 1)
+        self.assertEqual(output_is, output_should_be)
+
+    def test_linear_least_squares_short(self):
+        x_values = [1, 2, 3, 4]
+        y_values = [6, 5, 7, 10]
+
+        output_is = Math_m.linear_least_squares(x_values, y_values)
+        output_should_be = (1.4, 3.5)
+        self.assertEqual(output_is, output_should_be)
+
+    def test_linear_least_squares_long(self):
+        x_values = [1.47, 1.50, 1.52, 1.55, 1.57, 1.60, 1.63, 1.65, 1.68, 1.70, 1.73, 1.75, 1.78, 1.80, 1.83]
+        y_values = [52.21, 53.12, 54.48, 55.84, 57.20, 58.57, 59.93, 61.29, 63.11, 64.47, 66.28, 68.10, 69.92, 72.19, 74.46]
+
+        output_is = Math_m.linear_least_squares(x_values, y_values)
+        output_should_be = (61.272, -39.062)
+        self.assertAlmostEqual(output_is[0], output_should_be[0], 3)
+        self.assertAlmostEqual(output_is[1], output_should_be[1], 3)
+
+    def test_linear_least_squares_flat(self):
+        x_values = [1, 2, 3, 4, 5, 6]
+        y_values = [5, 5, 5, 5, 5, 5]
+
+        output_is = Math_m.linear_least_squares(x_values, y_values)
+        output_should_be = (0, 5)
+        self.assertEqual(output_is, output_should_be)
+
+    def test_linear_least_squares_empty(self):
+        x_values = []
+        y_values = []
+
+        self.assertRaises(ValueError, Math_m.linear_least_squares, x_values, y_values)
+    
+    def test_linear_least_squares_lone_pair(self):
+        x_values = [1]
+        y_values = [5]
+
+        self.assertRaises(ValueError, Math_m.linear_least_squares, x_values, y_values)
+
