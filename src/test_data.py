@@ -1,7 +1,7 @@
 import unittest
 import datetime
 
-from data import DataSet, InvalidInputException
+from dataset import DataSet, InvalidInputException
 
 FILEPATH = "./test_data/test_input.csv"
 
@@ -244,7 +244,10 @@ class TestDataSet(unittest.TestCase):
         data = DataSet(FILEPATH)
         self.assertRaises(InvalidInputException, data.add_row, date="2025-06-06", weight=100, kcal=2200)
 
-
+    def test_data_add_row_overwrite_fails(self):
+        data = {[]}
+        first_value = next(iter(data.values()))
+        print(f"TEST {len(first_value)=}")
 
     #TODO: Test chronological order of input
 

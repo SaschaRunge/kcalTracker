@@ -1,4 +1,3 @@
-import os
 import datetime
 
 from csv_loader import CSVLoader
@@ -34,6 +33,7 @@ class DataSet():
         first_value = next(iter(self._data.values()))
         return len(first_value)
     
+    #TODO: handle exceptions
     def _import_from_csv(self, filename):
         csv_loader = CSVLoader(filename)
         self._source_data = csv_loader.load_as_dict()
@@ -169,7 +169,6 @@ class DataSet():
     def _insert_row_at_index(self, date, i, **kwargs):
         for key, value in kwargs.items():
                 self._data[key].insert(i, value)
-
         self._data["date"].insert(i, date)
     
     def _append_row(self, date, **kwargs):
@@ -179,6 +178,9 @@ class DataSet():
 
     def get_copy(self, key):
         return self._data[key].copy()
+    
+    def get(self):
+        return self._data
 
     #TODO: migrate parsing responsibilty to higher level
     def get_by_date(self, key, start_date, end_date=None):
