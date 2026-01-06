@@ -116,19 +116,30 @@ class DataSet():
         return True
     
     def _delete_point(self, key, date):
-        """
-        Don't use, just for testing.
-        """
-
         if (key not in self._data):
             raise InvalidInputException(f"Key '{key}' does not exist. Do not call _delete_point.")
         date = DataSet._to_date(date)
 
+        i = self._get_index(date)
+        if i is not None:
+            del self._data[key][i]
+            return True
+        return False 
+    
+    def delete_row(self, date):
+        i = self._get_index(date)
+        if i is not None:
+            for key in self._data:
+                del self._data[key][i]
+            return True
+        return False
+    
+    def _get_index(self, date):
+        date = DataSet._to_date(date)
         for i, value in enumerate(self._data["date"]):
             if value == date:
-                del self._data[key][i]
-                return True
-        return False 
+                return i
+        return None
 
     #TODO: probably should check validity of data after each modification    
     def add_column(self, key, data):
@@ -140,6 +151,11 @@ class DataSet():
         for key in kwargs:
             if key not in self._data:
                 raise InvalidInputException(f"No such key '{key}' exists.")
+            if key == "kcal" or key == "weight":
+                try:
+                    Parser.parse_float(kwargs[key])
+                except:
+                    raise InvalidInputException(f"Invalid input for column {key}. Input must parse to a number (int/float).")
         for key in self._data:
             if key not in kwargs:
                 raise InvalidInputException(f"Input is missing values for key '{key}'.")

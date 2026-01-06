@@ -244,10 +244,46 @@ class TestDataSet(unittest.TestCase):
         data = DataSet(FILEPATH)
         self.assertRaises(InvalidInputException, data.add_row, date="2025-06-06", weight=100, kcal=2200)
 
-    def test_data_add_row_overwrite_fails(self):
-        data = {[]}
-        first_value = next(iter(data.values()))
-        print(f"TEST {len(first_value)=}")
+    def test_get_index(self):
+        data = DataSet(FILEPATH)
+        self.assertEqual(data._get_index("2025-04-15"), 6)
+
+    def test_get_index_None(self):
+        data = DataSet(FILEPATH)
+        self.assertEqual(data._get_index("2023-04-15"), None)
+
+    def test_delete_row(self):
+        data = DataSet(FILEPATH)
+        self.assertTrue(data.delete_row("2025-06-09"))
+        date_is = data.get_window("date", "2025-06-07", 10)
+        date_should_be = [datetime.date.fromisoformat("2025-06-07"), datetime.date.fromisoformat("2025-06-08"), 
+                          datetime.date.fromisoformat("2025-06-10"), datetime.date.fromisoformat("2025-06-11")]
+        weight_is = data.get_window("weight", "2025-06-07", 10)
+        weight_should_be = [91.5, 91.5, 91.5, 90.9]
+        kcal_is = data.get_window("kcal", "2025-06-07", 10)
+        kcal_should_be = [2524, 2011, 1811, 2818]
+        self.assertEqual(date_is, date_should_be)
+        self.assertEqual(weight_is, weight_should_be)
+        self.assertEqual(kcal_is, kcal_should_be)
+
+    def test_delete_row_twice(self):
+        data = DataSet(FILEPATH)
+        self.assertTrue(data.delete_row("2025-06-09"))
+        self.assertTrue(data.delete_row("2025-06-11"))
+        date_is = data.get_window("date", "2025-06-07", 10)
+        date_should_be = [datetime.date.fromisoformat("2025-06-07"), datetime.date.fromisoformat("2025-06-08"), 
+                          datetime.date.fromisoformat("2025-06-10")]
+        weight_is = data.get_window("weight", "2025-06-07", 10)
+        weight_should_be = [91.5, 91.5, 91.5]
+        kcal_is = data.get_window("kcal", "2025-06-07", 10)
+        kcal_should_be = [2524, 2011, 1811]
+        self.assertEqual(date_is, date_should_be)
+        self.assertEqual(weight_is, weight_should_be)
+        self.assertEqual(kcal_is, kcal_should_be)
+
+    def test_delete_row_not_existing(self):
+        data = DataSet(FILEPATH)
+        self.assertFalse(data.delete_row("2025-06-12"))
 
     #TODO: Test chronological order of input
 

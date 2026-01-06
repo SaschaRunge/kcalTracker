@@ -4,7 +4,7 @@ from cli import CLI
 
 def main():
     dataset = DataSet()
-    cli = CLI(dataset.get())
+    cli = CLI(dataset)
     cli.run()
 
 if __name__ == '__main__':
